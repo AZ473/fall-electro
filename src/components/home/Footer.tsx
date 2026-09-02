@@ -56,7 +56,7 @@ export function Footer() {
           <div className="text-center md:text-left">© 2026 Fall Electro.sn. Tous droits réservés.</div>
           <div className="flex flex-wrap justify-center gap-2 items-center">
             <span>Paiements :</span>
-            {["Wave", "Orange Money", "Free Money", "Visa", "Mastercard"].map((p) => (
+            {["Wave", "Orange Money", "Free Money"].map((p) => (
               <span key={p} className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 font-medium text-navy-foreground/80">{p}</span>
             ))}
           </div>
