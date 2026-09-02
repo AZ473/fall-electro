@@ -142,3 +142,6 @@
   50% { opacity: 1; }
 }
 @utility animate-glow { animation: glow-pulse 3s ease-in-out infinite; }
+
+/* Hide Lovable badge */
+[id*='lovable'], #lovable-badge-container, [class*='lovable'] { display: none !important; }

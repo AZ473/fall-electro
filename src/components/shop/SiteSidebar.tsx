@@ -1,7 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Tag, Sparkles, TrendingUp, Info, Phone, Zap, ShieldCheck } from "lucide-react";
+import { Home, Tag, Sparkles, TrendingUp, Info, Phone, Zap, ShieldCheck, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import logoFull from "@/assets/logo-fall-electro.png";
 import logoMark from "@/assets/logo-mark.png";
 import {
@@ -34,6 +35,7 @@ export function SiteSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { user } = useAuth();
 
   const { data: cats = [] } = useQuery({
     queryKey: ["sidebar-categories"],
@@ -78,6 +80,24 @@ export function SiteSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider">Mon compte</SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === (user ? "/account" : "/auth")} tooltip={user ? "Mon compte" : "Se connecter"} className={itemClass}>
+                  <Link to={user ? "/account" : "/auth"}>
+                    <User className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span className="truncate">{user ? "Mon profil" : "Se connecter"}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
