@@ -92,6 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Achetez en ligne TV, réfrigérateurs, climatiseurs, cuisinières, mobilier et plus. Livraison rapide partout au Sénégal, paiement sécurisé Wave, Orange Money, Visa." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cd74c28d-1e06-4755-913d-4b7683ecfc99/id-preview-5dda36c8--6efabe6b-cc96-4ed0-82c6-90e1c114b6e2.lovable.app-1784910444358.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cd74c28d-1e06-4755-913d-4b7683ecfc99/id-preview-5dda36c8--6efabe6b-cc96-4ed0-82c6-90e1c114b6e2.lovable.app-1784910444358.png" },
+      { name: "google", content: "notranslate" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -105,15 +106,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
+  wrapInSuspense: true,
 });
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr" translate="no" className="notranslate" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>

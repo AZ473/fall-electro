@@ -64,10 +64,15 @@ function CategoriesPage() {
     mutationFn: async () => {
       let image_url: string | null = null;
       if (file) {
-        const path = `${Date.now()}-${file.name}`;
+        const ext = file.name.split(".").pop();
+        const base = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+        const safeName = `${slugify(base)}.${ext}`;
+        const path = `${Date.now()}-${safeName}`;
         const { error } = await supabase.storage.from("category-images").upload(path, file);
         if (error) throw error;
-        image_url = supabase.storage.from("category-images").getPublicUrl(path).data.publicUrl;
+        const { data: signed, error: sErr } = await supabase.storage.from("category-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+        if (sErr) throw sErr;
+        image_url = signed.signedUrl;
       }
       const { error } = await supabase.from("categories").insert({
         name, slug: slugify(name), image_url, is_popular: isPopular,
@@ -129,7 +134,17 @@ function CategoriesPage() {
           </div>
 
           <Button type="button" variant="outline" className="w-full" onClick={runAi} disabled={generating || !name.trim()}>
-            {generating ? <><Loader2 className="h-4 w-4 animate-spin" />Génération...</> : <><Sparkles className="h-4 w-4" />Générer l'image par IA</>}
+            {generating ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Génération...</span>
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                <span>Générer l'image par IA</span>
+              </span>
+            )}
           </Button>
 
           <div className="flex items-center justify-between">

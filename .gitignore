@@ -33,3 +33,5 @@ dist-ssr
 .workspace/
 *.zip
 
+# Environment
+.env

@@ -40,6 +40,8 @@ export function ProductForm({ productId }: { productId?: string }) {
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [aiNotes, setAiNotes] = useState("");
+  const [aiNotesImage, setAiNotesImage] = useState<File | null>(null);
   const generateAi = useServerFn(generateProductDetails);
 
   const { data: categories = [] } = useQuery({
@@ -114,20 +116,23 @@ export function ProductForm({ productId }: { productId?: string }) {
     setAiLoading(true);
     try {
       const payload = await Promise.all(files.slice(0, 4).map(fileToDataUrl));
+      const notesImagePayload = aiNotesImage ? await fileToDataUrl(aiNotesImage) : undefined;
       const res = await generateAi({
         data: {
           images: payload,
           price: Number(form.price),
           categories: (categories as { id: string; name: string }[]).map((c) => ({ id: c.id, name: c.name })),
           brands: (brands as { id: string; name: string }[]).map((b) => ({ id: b.id, name: b.name })),
+          notes: aiNotes.trim() || undefined,
+          notesImage: notesImagePayload,
         },
       });
       setForm((f) => ({
         ...f,
-        name: res.name,
-        slug: slugify(res.name),
-        description: res.description,
-        sku: f.sku || res.sku,
+        name: res.name || "",
+        slug: slugify(res.name || ""),
+        description: res.description || "",
+        sku: f.sku || res.sku || "",
         category_id: res.category_id ?? f.category_id,
         brand_id: res.brand_id ?? f.brand_id,
       }));
@@ -295,6 +300,31 @@ export function ProductForm({ productId }: { productId?: string }) {
               <p className="text-xs text-muted-foreground mt-2">Jusqu'à 4 photos analysées (angles, couleurs).</p>
             </div>
 
+            <div>
+              <Label>Précisions pour l'IA (Facultatif)</Label>
+              <Textarea 
+                placeholder="Ex: Marque spécifique, caractéristiques techniques, dimensions, état du produit..." 
+                rows={2} 
+                value={aiNotes} 
+                onChange={(e) => setAiNotes(e.target.value)} 
+                className="mt-1 mb-2"
+              />
+              <div className="flex items-center gap-3">
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  className="flex-1 text-sm file:text-sm file:font-medium"
+                  onChange={(e) => setAiNotesImage(e.target.files?.[0] || null)}
+                />
+                {aiNotesImage && (
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setAiNotesImage(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">L'IA se basera sur ce texte et/ou cette image jointe (ex: fiche technique) pour rédiger la description détaillée.</p>
+            </div>
+
             <div className="rounded-xl bg-card border border-border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Activer la vente flash (offre du jour)</Label>
@@ -309,7 +339,17 @@ export function ProductForm({ productId }: { productId?: string }) {
             </div>
 
             <Button type="button" onClick={runAi} disabled={aiLoading} size="lg" className="w-full">
-              {aiLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Génération...</> : <><Sparkles className="h-4 w-4" />Générer la fiche</>}
+              {aiLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Génération...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  <span>Générer la fiche</span>
+                </span>
+              )}
             </Button>
           </div>
         </div>

@@ -16,33 +16,45 @@ export const generateCategoryImage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!adminRow) throw new Error("Forbidden");
 
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) throw new Error("AI indisponible");
+    const geminiKey = process.env["GEMINI_API_KEY"];
+    let englishPrompt = data.name;
+    
+    if (geminiKey) {
+      try {
+        const geminiRes = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${geminiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gemini-3.6-flash",
+            messages: [{
+              role: "user",
+              content: `Translate to a short English visual description of the object for an image generator (no extra text, just the object name): ${data.name}`
+            }]
+          }),
+        });
+        if (geminiRes.ok) {
+          const json = await geminiRes.json() as any;
+          if (json.choices?.[0]?.message?.content) {
+            englishPrompt = json.choices[0].message.content.trim();
+          }
+        }
+      } catch (e) {
+        console.error("Gemini translation error", e);
+      }
+    }
 
-    const prompt =
-      `Professional e-commerce category illustration for "${data.name}". ` +
-      `A single representative product centered, clean modern studio product photography, ` +
-      `soft lighting, light neutral background, minimalist, no text, no watermark, square composition.`;
-
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "openai/gpt-image-2",
-        prompt,
-        quality: "low",
-        size: "1024x1024",
-        n: 1,
-      }),
+    const prompt = `Professional e-commerce category illustration for "${englishPrompt}". A single representative product centered, clean modern studio product photography, soft lighting, light neutral background, minimalist, no text, no watermark, square composition.`;
+    
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true`;
+    
+    const res = await fetch(imageUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
     });
+    if (!res.ok) throw new Error("Erreur lors de la génération de l'image");
 
-    if (res.status === 429) throw new Error("Trop de requêtes IA, réessayez dans un instant.");
-    if (res.status === 402) throw new Error("Crédits IA épuisés.");
-    if (!res.ok) throw new Error(`Erreur IA (${res.status})`);
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const b64 = buffer.toString("base64");
 
-    const json = (await res.json()) as { data?: { b64_json?: string }[] };
-    const b64 = json.data?.[0]?.b64_json;
-    if (!b64) throw new Error("Image non générée");
-
-    return { dataUrl: `data:image/png;base64,${b64}` };
+    return { dataUrl: `data:image/jpeg;base64,${b64}` };
   });
