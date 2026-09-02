@@ -1,0 +1,1 @@
+DELETE FROM public.orders WHERE customer_phone IN ('770000000','770000001','77');
